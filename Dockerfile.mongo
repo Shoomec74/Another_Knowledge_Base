@@ -1,0 +1,10 @@
+FROM mongo:7.0
+RUN apt-get update && apt-get install -y dos2unix
+COPY mongod.cfg /etc/mongo/mongod.conf
+COPY mongo-init.sh /usr/local/bin/mongo-init.sh
+COPY mongo-keyfile /etc/mongo/keyfile
+COPY .env /usr/local/bin/
+RUN dos2unix /usr/local/bin/mongo-init.sh /usr/local/bin/.env
+RUN chmod +x /usr/local/bin/mongo-init.sh
+RUN chmod 600 /etc/mongo/keyfile && chown mongodb:mongodb /etc/mongo/keyfile
+ENTRYPOINT ["/usr/local/bin/mongo-init.sh"]

@@ -1,0 +1,27 @@
+services:
+  mongo:
+    container_name: 'mongodb'
+    build:
+      context: .
+      dockerfile: Dockerfile.mongo
+    hostname: 'mongo'
+    restart: always
+    ports:
+      - "127.0.0.1:27018:27017"
+    volumes:
+      - db_data:/data/db
+    networks:
+      - anotherKnowledgeBase
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --authenticationDatabase admin --eval 'db.hello().isWritablePrimary' | grep true >/dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+networks:
+  anotherKnowledgeBase:
+    driver: bridge
+
+volumes:
+  db_data:
