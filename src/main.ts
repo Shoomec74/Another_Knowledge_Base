@@ -5,6 +5,8 @@ import helmet from 'helmet';
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
+import { SanitizePipe } from './common/pipes';
 
 //-- Подключение глобального обработчика для перехвата необработанных исключений и отклоненных промисов --//
 process.on('unhandledRejection', (reason, promise) => {
@@ -27,21 +29,30 @@ async function bootstrap() {
 
   app.enableCors(cors);
 
+  //-- Настройка глобальных пайпов для валидации и санитизации входных данных --//
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, //-- Игнорировать свойства объектов, не описанные в DTO --//
+      forbidNonWhitelisted: true, //-- Запретить неизвестные свойства --//
+      transform: true, //-- Преобразование входных данных к соответствующим DTO классам --//
+      exceptionFactory: (errors) => new BadRequestException(errors), //-- Фабрика исключений для ошибок валидации --//
+    }),
+    new SanitizePipe(), //-- Пайп для санитизации входных данных
+  );
+
   //-- Применение промежуточного ПО Helmet для увеличения безопасности приложения --//
   app.use(
     helmet({
       contentSecurityPolicy: false, // Отключение политики CSP для ручной настройки позже
-      xssFilter: true, // Включение защиты от XSS-атак
       frameguard: { action: 'deny' }, // Блокировка встраивания сайта в iframe
       hsts: { maxAge: 31536000, includeSubDomains: true, preload: true }, // Включение HSTS для HTTPS
       noSniff: true, // Запрещение браузеру определять тип MIME автоматически
-      ieNoOpen: true, // Защита от файловых атак в Internet Explorer
     }),
   );
 
   //-- Настройка Swagger для автогенерации документации API --//
   const config = new DocumentBuilder()
-    .setTitle('API root_botorio')
+    .setTitle('API Another Knowledge Base ')
     .setDescription('Описание запросов для работы с сервисом')
     .setVersion('1.0')
     .addTag('auth', 'Авторизация пользователей')
@@ -58,11 +69,7 @@ async function bootstrap() {
   fs.writeFileSync('./swagger.yaml', yamlDocument, 'utf8');
 
   //-- Настройка маршрута для доступа к документации через веб-интерфейс --//
-  SwaggerModule.setup(
-    `${configService.get('SWAGGER_PREFIX')}`,
-    app,
-    document,
-  );
+  SwaggerModule.setup(`${configService.get('SWAGGER_PREFIX')}`, app, document);
 
   //-- Установка порта из конфигурации --//
   const port = configService.get('APP_PORT');

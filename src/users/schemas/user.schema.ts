@@ -1,7 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, HydratedDocument, Types } from 'mongoose';
-import { IsEmail, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
-import Role from './roleEnum';
+import { Document, HydratedDocument } from 'mongoose';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+import Role from '../../common/sharedTypes/roleEnum';
 
 export class Credentials {
   @IsEmail(
@@ -36,6 +42,15 @@ export class User extends Document {
   @IsNotEmpty()
   @Prop({ required: true, enum: Role, type: String })
   role: Role;
+
+  @Prop({ type: Date, default: Date.now })
+  createdAt: Date;
+
+  @Prop({ type: Date, default: Date.now })
+  updatedAt: Date;
+
+  @Prop({ type: Date, default: null })
+  deletedAt: Date;
 }
 
 export type UserDocument = HydratedDocument<User>;

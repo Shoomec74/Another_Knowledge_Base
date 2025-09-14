@@ -13,36 +13,41 @@ DBPATH="/data/db"
 LOGPATH="$DBPATH/mongod.log"
 PIDFILE="/tmp/mongod.pid"
 
-# 1) Временный запуск для инициализации RS/пользователя
-mongod -f /etc/mongo/mongod.conf \
-  --replSet "${DB_REPLICATION_SET}" --bind_ip_all \
-  --fork --logpath /data/db/mongod.log --pidfilepath /tmp/mongod.pid
+INIT_MARKER="$DBPATH/.init-done"
 
-# Ждём, пока mongod примет соединения
-tries=60
-until mongosh --quiet --eval "db.runCommand({ping:1}).ok" | grep -q "^1$"; do
-  ((tries--)) || { echo "mongod didn’t become ready"; exit 1; }
-  sleep 1
-done
+if [[ ! -f "$INIT_MARKER" ]]; then
+  echo "First run: performing replica set and user initialization..."
 
-# Инициализация реплика-сета (идемпотентно)
-if mongosh --quiet --eval "rs.status().ok" | grep -q "1"; then
-  echo "Replica set already initiated."
-else
-  echo "Initiating replica set..."
-  mongosh --quiet --eval "rs.initiate({_id:'${DB_REPLICATION_SET}', members:[{_id:0, host:'mongo:27017'}]})"
-fi
+  # 1) Временный запуск для инициализации RS/пользователя
+  mongod -f /etc/mongo/mongod.conf \
+    --replSet "${DB_REPLICATION_SET}" --bind_ip_all \
+    --fork --logpath /data/db/mongod.log --pidfilepath /tmp/mongod.pid
 
-# Ждём PRIMARY
-tries=60
-until mongosh --quiet --eval "db.hello().isWritablePrimary" | grep -q "true"; do
-  ((tries--)) || { echo "Primary not ready"; exit 1; }
-  sleep 1
-done
+  # Ждём, пока mongod примет соединения
+  tries=60
+  until mongosh --quiet --eval "db.runCommand({ping:1}).ok" | grep -q "^1$"; do
+    ((tries--)) || { echo "mongod didn’t become ready"; exit 1; }
+    sleep 1
+  done
 
-# Создание root-пользователя (без usersInfo — сразу createUser)
-if [[ -n "${MONGO_INITDB_ROOT_USERNAME:-}" && -n "${MONGO_INITDB_ROOT_PASSWORD:-}" ]]; then
-  mongosh --quiet admin <<EOF
+  # Инициализация реплика-сета (идемпотентно)
+  if mongosh --quiet --eval "rs.status().ok" | grep -q "1"; then
+    echo "Replica set already initiated."
+  else
+    echo "Initiating replica set..."
+    mongosh --quiet --eval "rs.initiate({_id:'${DB_REPLICATION_SET}', members:[{_id:0, host:'mongo:27017'}]})"
+  fi
+
+  # Ждём PRIMARY
+  tries=60
+  until mongosh --quiet --eval "db.hello().isWritablePrimary" | grep -q "true"; do
+    ((tries--)) || { echo "Primary not ready"; exit 1; }
+    sleep 1
+  done
+
+  # Создание root-пользователя (без usersInfo — сразу createUser)
+  if [[ -n "${MONGO_INITDB_ROOT_USERNAME:-}" && -n "${MONGO_INITDB_ROOT_PASSWORD:-}" ]]; then
+    mongosh --quiet admin <<EOF
 const u = ${MONGO_INITDB_ROOT_USERNAME@Q};
 const p = ${MONGO_INITDB_ROOT_PASSWORD@Q};
 try {
@@ -61,14 +66,20 @@ try {
   }
 }
 EOF
-else
-  echo "MONGO_INITDB_ROOT_USERNAME/PASSWORD not set, skip user creation."
-fi
+  else
+    echo "MONGO_INITDB_ROOT_USERNAME/PASSWORD not set, skip user creation."
+  fi
 
-# 2) Гасим временный mongod
-mongod --shutdown --dbpath /data/db || {
-  [[ -f /tmp/mongod.pid ]] && kill -2 "$(cat /tmp/mongod.pid)" || true
-}
+  # 2) Гасим временный mongod
+  mongod --shutdown --dbpath /data/db || {
+    [[ -f /tmp/mongod.pid ]] && kill -2 "$(cat /tmp/mongod.pid)" || true
+  }
+
+  # Ставим маркер инициализации
+  touch "$INIT_MARKER"
+else
+  echo "Subsequent run: skipping initialization."
+fi
 
 # 3) Финальный запуск в форграунде как PID 1
 exec mongod -f /etc/mongo/mongod.conf --replSet "${DB_REPLICATION_SET}" --bind_ip_all

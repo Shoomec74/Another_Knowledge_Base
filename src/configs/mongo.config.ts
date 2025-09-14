@@ -4,8 +4,14 @@ import {
 } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 
-const databaseOptions = (configService: ConfigService): MongooseModuleOptions => {
-  const env = (configService.get<string>('NODE_ENV'));
+const databaseOptions = (
+  configService: ConfigService,
+): MongooseModuleOptions => {
+  const directUri = configService.get<string>('MONGODB_URI');
+  if (directUri) {
+    return { uri: directUri };
+  }
+  const env = configService.get<string>('NODE_ENV');
   const isProd = env === 'prod';
 
   const user = encodeURIComponent(configService.get<string>('DB_USERNAME')!);
@@ -35,5 +41,6 @@ const databaseOptions = (configService: ConfigService): MongooseModuleOptions =>
 
 export const databaseConfig = (): MongooseModuleAsyncOptions => ({
   inject: [ConfigService],
-  useFactory: async (configService: ConfigService) => databaseOptions(configService),
+  useFactory: async (configService: ConfigService) =>
+    databaseOptions(configService),
 });

@@ -3,10 +3,12 @@ import { ConfigModule } from '@nestjs/config';
 import { envValidationSchema } from './common/env.validation';
 import { MongooseModule } from '@nestjs/mongoose';
 import { databaseConfig } from './configs/mongo.config';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { throttlerConfig } from './configs/throttler.config';
 import { UsersModule } from './users/users.module';
 import { ArticlesModule } from './articles/articles.module';
+import { AuthModule } from './auth/auth.module';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -26,10 +28,16 @@ import { ArticlesModule } from './articles/articles.module';
     }),
     ThrottlerModule.forRootAsync(throttlerConfig()),
     MongooseModule.forRootAsync(databaseConfig()),
+    AuthModule,
     UsersModule,
     ArticlesModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

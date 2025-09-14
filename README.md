@@ -1,85 +1,92 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+## Another Knowledge Base (Backend)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+### Стек
+- NestJS 10, TypeScript, Mongoose 7, JWT, CASL, Joi, Swagger, migrate-mongo, mongodb-memory-server (e2e)
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+### Обоснование решений
+- MongoDB: простая схема статей/пользователей, теги и флаги удобно мапятся на документную модель; индексы покрывают типичные запросы. Сложные агрегирующие запросы и пайплайны тоже позволяют гибко, работать с коллекциями. 
+- CASL: понятный и простой контроль доступа, в т.ч. по владению документом. CASL есть так же для реакта, для фуллстек решения очень хорошо подходит на мой взгляд.
+- migrate-mongo: декларативные миграции, возможность сидов и индексов, интеграция с CI/CD.
+- Nest Swagger не успел нормально оформить, так как уже времени не остается, но в целом гляньте давно я писал фабрику для генерации API properties, чтобы убрать шум декораторов в контролерах. Уже не успею нормально оформить, просто пусть будет как опция, что я это знаю и умею.
+- unit тесты почти пустые потому что приложение простое нет сложных бизнес функций, решил покрыть лучше целиком функионал с помощью e2e. e2e поднимутся на mongodb-memory-server, внешняя БД не нужна. 
 
-## Description
+### Возможности
+- CRUD статей с флагами `isPublic/isPublished/isDraft`, фильтрация по тегам
+- Аутентификация (local, JWT), logout с blacklist для access-токенов
+- Контроль доступа через CASL (роль ADMIN/USER, права на ресурсы и по владению)
+- Валидация и санитизация DTO, Helmet, CORS, Throttler
+- Swagger UI (см. SWAGGER_PREFIX), e2e-тесты
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### Требования
+- Node 18+, npm 9+
+- MongoDB (лучше через docker-compose), replica set (для работы транзакций необходима хотя бы однонодовая реплика)
 
-## Project setup
+### Переменные окружения (.env)
+См. `env.example`. Ключевые:
+- APP_PORT, ALLOW_URL
+- JWT_SECRET, JWT_EXPIRES, REFRESHTOKEN_EXPIRESIN
+- DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME, DB_REPLICATION_SET или MONGODB_URI
+- SWAGGER_PREFIX
+- HASH_KEY
+- SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD, SEED_ADMIN_USERNAME (для миграции-сиды админа)
 
+### Установка и запуск (локально)
 ```bash
-$ npm install
+# Установите зависимости
+npm ci
+#Создайте файл с переменными
+cp env.example .env
+#Создайте ключ файл для авторизации между репликами
+openssl rand -base64 756 > mongo-keyfile
+# поднимите Mongo через docker-compose (лучше так)
+docker compose up -d
+# прогон миграций (индексы + сид админа) + старт сервера
+npm run start:with-migrate
 ```
 
-## Compile and run the project
+Swagger UI: `http://localhost:<APP_PORT>/<SWAGGER_PREFIX>`
 
+Если ничего не будете менять то - "http://localhost:5678/jhgkdf1ljg1hdjf34543kghkdfjghj3345343734567kdfhgjkdf453454hgjkdfhgkljdfhjgkh#/"
+
+### Миграции (migrate-mongo)
+- Конфигурация: `migrate-mongo-config.js` (читает .env, директория миграций: `src/migrations`)
+- Команды:
 ```bash
-# development
-$ npm run start
+npm run migrate:create    # создать миграцию
+npm run migrate:up        # применить все
+npm run migrate:down      # откатить последнюю
+```
+- Дефолтная миграция: `20250914120000-init-indexes-and-admin.js`
+  - создаёт индексы: `users (uniq email, role, deletedAt)`, `articles (tags, author, flags, deletedAt)`, `blacklisttokens (uniq token, expirationDate)`
+  - сидирует супер-админа из `SEED_ADMIN_*` (если ещё не существует)
+  - ВНИМАНИЕ! Я знаю, что миграции не для инициализаций записей в БД, но времени было в обрез уже, чтобы писать отдельно какое-то решение, пришлось немного шалить =) Надеюсь вы читаете это и с пониманием отнесётесь. 
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+### Запуск с автоматическими миграциями
+```bash
+npm run start:with-migrate       # миграции -> старт
+npm run start:dev:with-migrate   # миграции -> старт в watch
 ```
 
-## Run tests
-
+### Docker (Mongo)
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+docker compose up -d mongo
 ```
 
-## Resources
+#### Подготовка keyfile для реплика-сета Mongo (обязательно перед сборкой образа)
+В корне проекта должен лежать файл `mongo-keyfile`, он копируется при сборке образа Mongo. Сгенерируйте его один раз:
 
-Check out a few resources that may come in handy when working with NestJS:
+Git Bash/Linux/macOS:
+```bash
+openssl rand -base64 756 > mongo-keyfile
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+Затем поднимайте Mongo:
+```bash
+docker compose up -d mongo
+```
 
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### Тесты
+```bash
+npm run test
+npm run test:e2e
+```
