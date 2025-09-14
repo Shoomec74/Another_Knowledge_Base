@@ -1,0 +1,450 @@
+{
+	"info": {
+		"_postman_id": "ff05338c-2c6f-48a6-ad80-7bf143ad8db8",
+		"name": "Perfomance Group Test",
+		"description": "# 🚀 Get started here\n\nThis template guides you through CRUD operations (GET, POST, PUT, DELETE), variables, and tests.\n\n## 🔖 **How to use this template**\n\n#### **Step 1: Send requests**\n\nRESTful APIs allow you to perform CRUD operations using the POST, GET, PUT, and DELETE HTTP methods.\n\nThis collection contains each of these [request](https://learning.postman.com/docs/sending-requests/requests/) types. Open each request and click \"Send\" to see what happens.\n\n#### **Step 2: View responses**\n\nObserve the response tab for status code (200 OK), response time, and size.\n\n#### **Step 3: Send new Body data**\n\nUpdate or add new data in \"Body\" in the POST request. Typically, Body data is also used in PUT request.\n\n```\n{\n    \"name\": \"Add your name in the body\"\n}\n\n ```\n\n#### **Step 4: Update the variable**\n\nVariables enable you to store and reuse values in Postman. We have created a [variable](https://learning.postman.com/docs/sending-requests/variables/) called `base_url` with the sample request [https://postman-api-learner.glitch.me](https://postman-api-learner.glitch.me). Replace it with your API endpoint to customize this collection.\n\n#### **Step 5: Add tests in the \"Scripts\" tab**\n\nAdding tests to your requests can help you confirm that your API is working as expected. You can write test scripts in JavaScript and view the output in the \"Test Results\" tab.\n\n<img src=\"https://content.pstmn.io/fa30ea0a-373d-4545-a668-e7b283cca343/aW1hZ2UucG5n\" alt=\"\" height=\"1530\" width=\"2162\">\n\n## 💪 Pro tips\n\n- Use folders to group related requests and organize the collection.\n    \n- Add more [scripts](https://learning.postman.com/docs/writing-scripts/intro-to-scripts/) to verify if the API works as expected and execute workflows.\n    \n\n## 💡Related templates\n\n[API testing basics](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9a37a28-055b-49cd-8c7e-97494a21eb54&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[API documentation](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9c28f47-1253-44af-a2f3-20dce4da1f18&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[Authorization methods](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=31a9a6ed-4cdf-4ced-984c-d12c9aec1c27&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "27287651"
+	},
+	"item": [
+		{
+			"name": "auth",
+			"item": [
+				{
+					"name": "signup",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"s@s.ru\",\r\n  \"password\": \"qwerty1234\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}:{{base_port}}/signup",
+							"host": [
+								"{{base_url}}"
+							],
+							"port": "{{base_port}}",
+							"path": [
+								"signup"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				},
+				{
+					"name": "signin",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let token;",
+									"try {",
+									"    const data = pm.response.json();",
+									"    token = data?.accessToken;",
+									"} catch (e) {",
+									"    //noop",
+									"}",
+									"",
+									"if (token) {",
+									"    pm.globals.set('base_token', token);",
+									"} else {",
+									"    console.warn('Token not found in response');",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"packages": {},
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"s@s.ru\",\n  \"password\": \"qwerty1234\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}:{{base_port}}/signin",
+							"host": [
+								"{{base_url}}"
+							],
+							"port": "{{base_port}}",
+							"path": [
+								"signin"
+							]
+						},
+						"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "refresh-token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let token;",
+									"try {",
+									"    const data = pm.response.json();",
+									"    token = data?.accessToken;",
+									"} catch (e) {",
+									"    //noop",
+									"}",
+									"",
+									"if (token) {",
+									"    pm.globals.set('base_token', token);",
+									"} else {",
+									"    console.warn('Token not found in response');",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2OGM3MGIxOWI0NGFkNzIzMzJhNzQ5NjciLCJqdGkiOiIwZjVkMDA3Yzc2ODA2NTg1OGEyNzc3NWFmNmRhZDhlMyIsInR5cGUiOiJyZWZyZXNoIiwiaWF0IjoxNzU3ODc2MTU0LCJleHAiOjE3NTg0ODA5NTR9.Di9m3kHx_LJ5PIEHTB8wgDrkIfdn66C4-HvPQO8ifeA\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}:{{base_port}}/refresh-token",
+							"host": [
+								"{{base_url}}"
+							],
+							"port": "{{base_port}}",
+							"path": [
+								"refresh-token"
+							]
+						},
+						"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "reset-password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful POST request\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"email\": \"s@s.ru\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}:{{base_port}}/reset-password",
+							"host": [
+								"{{base_url}}"
+							],
+							"port": "{{base_port}}",
+							"path": [
+								"reset-password"
+							]
+						},
+						"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "users",
+			"item": [
+				{
+					"name": "create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"admin\",\r\n    \"email\": \"admin@admin\",\r\n    \"password\": \"qwerty1234\",\r\n    \"role\": 2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}:{{base_port}}/users",
+							"host": [
+								"{{base_url}}"
+							],
+							"port": "{{base_port}}",
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "getAll",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}:{{base_port}}/users",
+							"host": [
+								"{{base_url}}"
+							],
+							"port": "{{base_port}}",
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "delete/:userId",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}:{{base_port}}/users/68c69e333739275433a71f40",
+							"host": [
+								"{{base_url}}"
+							],
+							"port": "{{base_port}}",
+							"path": [
+								"users",
+								"68c69e333739275433a71f40"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update/:userId",
+					"request": {
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"shoomec\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}:{{base_port}}/users/68c70b19b44ad72332a74967",
+							"host": [
+								"{{base_url}}"
+							],
+							"port": "{{base_port}}",
+							"path": [
+								"users",
+								"68c70b19b44ad72332a74967"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "currentUserInfo",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}:{{base_port}}/users/me",
+							"host": [
+								"{{base_url}}"
+							],
+							"port": "{{base_port}}",
+							"path": [
+								"users",
+								"me"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "article",
+			"item": [
+				{
+					"name": "create",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"title\": \"Как сгененерировать ресурс в nestjs?\",\r\n  \"body\": \"Выполните команду nest generate resource и следуйте указаниям\",\r\n  \"tags\": [\"nest\", \"nest cli\"],\r\n  \"isPublished\": true,\r\n  \"isPublic\": true,\r\n  \"isDraft\": false\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}:{{base_port}}/articles",
+							"host": [
+								"{{base_url}}"
+							],
+							"port": "{{base_port}}",
+							"path": [
+								"articles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get(query?tags)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}:{{base_port}}/articles?tags=nest,mongo",
+							"host": [
+								"{{base_url}}"
+							],
+							"port": "{{base_port}}",
+							"path": [
+								"articles"
+							],
+							"query": [
+								{
+									"key": "tags",
+									"value": "nest,mongo"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "get/:articleId",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}:{{base_port}}/articles/68c713bc3cef2a11ed64213c",
+							"host": [
+								"{{base_url}}"
+							],
+							"port": "{{base_port}}",
+							"path": [
+								"articles",
+								"68c713bc3cef2a11ed64213c"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{base_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "id",
+			"value": "1"
+		},
+		{
+			"key": "base_url",
+			"value": "http://localhost"
+		},
+		{
+			"key": "base_port",
+			"value": "5678"
+		}
+	]
+}

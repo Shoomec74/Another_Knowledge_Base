@@ -44,6 +44,16 @@ docker compose up -d
 npm run start:with-migrate
 ```
 
+### Тесты ручек с postman
+Выполните импорт колекции для тестов `Perfomance Group Test.postman_collection.json` в корне проекта.
+
+Зарегистрируйте нового пользователя. 
+
+Далее лучше всего сначала выполнить `signin`, чтобы тест сохранил `{{base_token}}`.
+
+Для удобства тестов суперадминского функционала добавил в постман отдельный `signinAdmin`.
+
+### Swagger UI
 Swagger UI: `http://localhost:<APP_PORT>/<SWAGGER_PREFIX>`
 
 Если ничего не будете менять то - "http://localhost:5678/jhgkdf1ljg1hdjf34543kghkdfjghj3345343734567kdfhgjkdf453454hgjkdfhgkljdfhjgkh#/"
