@@ -8,7 +8,29 @@
 - CASL: понятный и простой контроль доступа, в т.ч. по владению документом. CASL есть так же для реакта, для фуллстек решения очень хорошо подходит на мой взгляд.
 - migrate-mongo: декларативные миграции, возможность сидов и индексов, интеграция с CI/CD.
 - Nest Swagger не успел нормально оформить, так как уже времени не остается, но в целом гляньте давно я писал фабрику для генерации API properties, чтобы убрать шум декораторов в контролерах. Уже не успею нормально оформить, просто пусть будет как опция, что я это знаю и умею.
-- unit тесты почти пустые потому что приложение простое нет сложных бизнес функций, решил покрыть лучше целиком функионал с помощью e2e. e2e поднимутся на mongodb-memory-server, внешняя БД не нужна. 
+- unit тесты почти пустые потому что приложение простое нет сложных бизнес функций, решил покрыть лучше целиком функионал с помощью e2e. e2e поднимутся на mongodb-memory-server, внешняя БД не нужна.
+- Момент про слои пмодулей. Я не стал выносить в отдельный слой работу с БД, то есть сощдавать репозиторий. Прекрасно осознаю что слой сервиса не должен зависеть от конкретной реализации доступа к данным, но в данном кейсе это просто была бы лишняя прослойка которая ничего не делает, я имею ввиду сервисный слой. Конечно можно было бы сделать что-то типа вот такого (ports & adapters).
+
+Создаем интерфейс или абстрактный класс с описанием методов
+```
+export abstract class RepositoryPort {
+  abstract create(userId: string, data: CreatePaymentDto): Promise<Payment>;
+  abstract delete(data: string): Promise<Payment>;
+  abstract findOne(data: string): Promise<Payment>;
+  abstract findAll(): Promise<Payment[]>;
+  abstract findUsersAll(data: Types.ObjectId): Promise<Payment[]>;
+  abstract update(id: string, data: CreatePaymentDto): Promise<Payment>;
+}
+```
+Описываем слой работы с БД
+```
+export class PaymentsRepository extends RepositoryPort {
+```
+Подслкючаем в адаптер, где хортим использовать. Так слой сервиса ничего не знает о том как мы работаем с бд.
+```
+export class PaymentsService {
+  constructor(private readonly paymentsRepository: RepositoryPort) {}
+```
 
 ### Возможности
 - CRUD статей с флагами `isPublic/isPublished/isDraft`, фильтрация по тегам
